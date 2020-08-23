@@ -141,25 +141,6 @@ function createPhysicsParticles() {
   _b2ParticleSystem.CreateParticleGroup(particleGroupDef);
 }
 
-function createPhysicsBall() {
-  // 属性を設定
-  const bd = new b2BodyDef();
-  bd.type = b2_dynamicBody;
-  bd.position.Set(
-    windowW / 2 / METER, // 発生X座標
-    (-windowH * 1.5) / METER // 発生Y座標
-  );
-  // 形状を設定
-  const circle = new b2CircleShape();
-  circle.radius = SIZE_DRAGBLE / METER;
-
-  // 実態を作成
-  const body = world.CreateBody(bd);
-  _b2DragBallFixutre = body.CreateFixtureFromShape(circle, 8); //鉄：7.9、アルミニウム：2.6、ゴム：0.4、木：1.4、コンクリート：2.4、氷：1;
-  _b2DragBallFixutre.friction = 0.1; // 鉄：0.6、アルミニウム：0.6、ゴム：0.9、木：0.5、コンクリート：0.7、氷：0
-  _b2DragBallFixutre.restitution = 0.1; // 鉄：0.2、アルミニウム：0.3、ゴム：0.9、木：0.3、コンクリート：0.1、氷：0.1
-}
-
 function createPixiWorld() {
   // Pixiの世界を作成
   app = new PIXI.Application({
@@ -202,12 +183,6 @@ function createPixiWorld() {
     stage.addChild(shape); // 画面に追加
     _pixiParticles[i] = shape; // 配列に格納
   }
-
-  // ドラッグボールの作成
-  _pixiDragBall = new PIXI.Graphics();
-  _pixiDragBall.beginFill(0x990000); // 色指定
-  _pixiDragBall.drawCircle(0, 0, SIZE_DRAGBLE); // 大きさを指定
-  stage.addChild(_pixiDragBall); // 画面に追加
 }
 
 /** 時間経過で指出される関数です。 */
@@ -228,66 +203,7 @@ function handleTick() {
     shape.x = xx;
     shape.y = yy;
   }
-
-  // ドラッグボール : 物理演算エンジンとPixiの座標を同期
-  _pixiDragBall.x = _b2DragBallFixutre.body.GetPosition().x * METER;
-  _pixiDragBall.y = _b2DragBallFixutre.body.GetPosition().y * METER;
-
   requestAnimationFrame(handleTick);
-}
-
-/** ドラッグイベントを設定します。 */
-function setupDragEvent() {
-  _pixiDragBall.interactive = true;
-  _pixiDragBall.on("mousedown", dragStart);
-  _pixiDragBall.on("mousemove", dragMove);
-  _pixiDragBall.on("mouseup", dragEnd);
-  _pixiDragBall.on("mouseupoutside", dragEnd);
-  _pixiDragBall.on("touchstart", dragStart);
-  _pixiDragBall.on("touchmove", dragMove);
-  _pixiDragBall.on("touchend", dragEnd);
-  _pixiDragBall.on("touchendoutside", dragEnd);
-
-  function dragStart(event) {
-    _isDragging = true;
-    const p = getMouseCoords(event.data.global);
-    const aabb = new b2AABB();
-    aabb.lowerBound.Set(p.x - 0.001, p.y - 0.001);
-    aabb.upperBound.Set(p.x + 0.001, p.y + 0.001);
-    const queryCallback = new QueryCallback(p);
-    world.QueryAABB(queryCallback, aabb);
-
-    if (queryCallback.fixture) {
-      const body = queryCallback.fixture.body;
-      const md = new b2MouseJointDef();
-      md.bodyA = _b2GroundBody;
-      md.bodyB = body;
-      md.target = p;
-      md.maxForce = 1000 * body.GetMass();
-      // マウスジョイントを作成
-      _b2MouseJoint = world.CreateJoint(md);
-      body.SetAwake(true);
-    }
-  }
-
-  function dragMove(event) {
-    if (_isDragging === true) {
-      const p = getMouseCoords(event.data.global);
-      if (_b2MouseJoint) {
-        // マウスジョイントの対象座標を更新
-        _b2MouseJoint.SetTarget(p);
-      }
-    }
-  }
-
-  function dragEnd(event) {
-    _isDragging = false;
-    if (_b2MouseJoint) {
-      // マウスジョイントを破棄
-      world.DestroyJoint(_b2MouseJoint);
-      _b2MouseJoint = null;
-    }
-  }
 }
 
 /**
