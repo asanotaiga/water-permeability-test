@@ -11,8 +11,6 @@ const VELOCITY_ITERATIONS = 1;
 const POSITION_ITERATIONS = 1;
 /** パーティクルのサイズです。 */
 const SIZE_PARTICLE = 4;
-/** ドラッグボールのサイズです。 */
-const SIZE_DRAGBLE = 50;
 
 /** 画面のサイズ(横幅)です。 */
 const windowW = window.innerWidth;
@@ -24,20 +22,14 @@ const dpi = window.devicePixelRatio || 1.0;
 /** [Pixi.js] ステージです。 */
 let stage;
 let app;
-/** [Pixi.js] ドラッグボールの表示オブジェクトです。 */
-let _pixiDragBall;
 /** [Pixi.js] 粒子の表示オブジェクトの配列です。 */
 const _pixiParticles = [];
 let _isDragging = false;
 
 /** [LiquidFun] パーティクルシステムです。 */
 let _b2ParticleSystem;
-/** [LiquidFun] ドラッグボール用のインスタンスです。 */
-let _b2DragBallFixutre;
 /** [LiquidFun] マクスジョイントです。 */
 let _b2MouseJoint;
-/** [LiquidFun] ドラッグボール制御用のインスタンスです。 */
-let _b2GroundBody;
 
 /** 端末ごとにパフォーマンスを調整するための変数です。 */
 let performanceLevel;
@@ -67,7 +59,6 @@ function init() {
   // Box2Dのコンテンツを作成
   createPhysicsWalls();
   createPhysicsParticles();
-  createPhysicsBall();
 
   // Pixiのコンテンツを作成
   createPixiWorld();
@@ -93,7 +84,7 @@ function createPhysicsWalls() {
       windowW / METER / 2, // X座標
       windowH / METER + 0.05
     ), // Y座標
-    0
+    100
   );
   bobo.CreateFixtureFromShape(wg, density);
 
