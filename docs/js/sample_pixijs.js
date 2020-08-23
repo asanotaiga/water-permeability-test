@@ -10,7 +10,7 @@ const VELOCITY_ITERATIONS = 1;
 /** 位置の計算回数です。回数が多いほど正確になりますが、計算負荷が増えます。 */
 const POSITION_ITERATIONS = 1;
 /** パーティクルのサイズです。 */
-const SIZE_PARTICLE = 4;
+const SIZE_PARTICLE = 5;
 
 /** 画面のサイズ(横幅)です。 */
 const windowW = window.innerWidth;
@@ -75,24 +75,37 @@ function createPhysicsWalls() {
 
   const bdDef = new b2BodyDef();
   const bobo = world.CreateBody(bdDef);
-  // 壁の生成 (地面)
-  const wg = new b2PolygonShape();
-  wg.SetAsBoxXYCenterAngle(
-    windowW / METER / 2, // 幅
+  // 壁の生成 (地面右)
+  const wg1 = new b2PolygonShape();
+  wg1.SetAsBoxXYCenterAngle(
+    windowW / METER / 2.5, // 幅
     5 / METER, // 高さ
     new b2Vec2(
-      windowW / METER / 2, // X座標
-      windowH / METER + 0.05
+      windowW / METER, // X座標
+      windowH / METER / 3
     ), // Y座標
-    100
+    0,
   );
-  bobo.CreateFixtureFromShape(wg, density);
+  bobo.CreateFixtureFromShape(wg1, density);
+
+  // 壁の生成 (地面左)
+  const wg2 = new b2PolygonShape();
+  wg2.SetAsBoxXYCenterAngle(
+    windowW / METER / 2.5, // 幅
+    5 / METER, // 高さ
+    new b2Vec2(
+      0, // X座標
+      windowH / METER / 3
+    ), // Y座標
+    0,
+  );
+  bobo.CreateFixtureFromShape(wg2, density);
 
   // 壁の生成 (左側)
   const wgl = new b2PolygonShape();
   wgl.SetAsBoxXYCenterAngle(
     5 / METER, // 幅
-    windowH / METER / 2, // 高さ
+    windowH / METER, // 高さ
     new b2Vec2(
       -0.05, // X座標
       windowH / METER / 2
@@ -105,7 +118,7 @@ function createPhysicsWalls() {
   const wgr = new b2PolygonShape();
   wgr.SetAsBoxXYCenterAngle(
     5 / METER, // 幅
-    windowH / METER / 2, // 高さ
+    windowH / METER, // 高さ
     new b2Vec2(
       windowW / METER + 0.05, // X座標
       windowH / METER / 2
@@ -113,6 +126,71 @@ function createPhysicsWalls() {
     0
   );
   bobo.CreateFixtureFromShape(wgr, density);
+
+  // 管の生成 (左側)
+  const wgpl = new b2PolygonShape();
+  wgpl.SetAsBoxXYCenterAngle(
+    5 / METER, // 幅
+    windowH / METER / 4, // 高さ
+    new b2Vec2(
+      windowW / METER / 2.5, // X座標
+      windowH / METER / 1.7
+    ), // Y座標
+    0
+  );
+  bobo.CreateFixtureFromShape(wgpl, density);
+
+  // 管の生成 (右側)
+  const wgpr = new b2PolygonShape();
+  wgpr.SetAsBoxXYCenterAngle(
+    5 / METER, // 幅
+    windowH / METER / 4, // 高さ
+    new b2Vec2(
+      windowW / METER / 1.65, // X座標
+      windowH / METER / 1.7
+    ), // Y座標
+    0
+  );
+  bobo.CreateFixtureFromShape(wgpr, density);
+
+    // 土粒子の生成 (１)
+    const soil1 = new b2PolygonShape();
+    soil1.SetAsBoxXYCenterAngle(
+      windowH / METER / 40, // 幅
+      windowH / METER / 160, // 高さ
+      new b2Vec2(
+        windowW / METER / 2, // X座標
+        windowH / METER / 2
+      ), // Y座標
+      0
+    );
+    bobo.CreateFixtureFromShape(soil1, density);
+
+    // 土粒子の生成 (2)
+    const soil2 = new b2PolygonShape();
+    soil2.SetAsBoxXYCenterAngle(
+      windowH / METER / 40, // 幅
+      windowH / METER / 160, // 高さ
+      new b2Vec2(
+        windowW / METER / 1.8, // X座標
+        windowH / METER / 1.8
+      ), // Y座標
+      0
+    );
+    bobo.CreateFixtureFromShape(soil2, density);
+
+    // 土粒子の生成 (3)
+    const soil3 = new b2PolygonShape();
+    soil3.SetAsBoxXYCenterAngle(
+      windowH / METER / 40, // 幅
+      windowH / METER / 160, // 高さ
+      new b2Vec2(
+        windowW / METER / 2.2, // X座標
+        windowH / METER / 1.6
+      ), // Y座標
+      0
+    );
+    bobo.CreateFixtureFromShape(soil3, density);
 }
 
 /** LiquidFunの世界で「粒子」を生成します。 */
@@ -120,7 +198,8 @@ function createPhysicsParticles() {
   // 粒子の作成 (プロパティーの設定)
   const psd = new b2ParticleSystemDef();
   psd.radius = SIZE_PARTICLE / METER; // 粒子の半径
-  psd.pressureStrength = 4.0; // Increases pressure in response to compression Smaller values allow more compression
+  psd.pressureStrength = 1.0; // Increases pressure in response to compression Smaller values allow more compression
+  psd.repulsiveStrength = 0.0 //反発粒子に追加の圧力を生成します。値が大きいほど反発力が大きくなります。負の値は引力を意味します。パーティクルが安定して動作する範囲は、約-0.2〜2.0です。
   _b2ParticleSystem = world.CreateParticleSystem(psd);
   // 粒子の発生領域
   const box = new b2PolygonShape();
@@ -128,11 +207,11 @@ function createPhysicsParticles() {
   const w = performanceLevel === "high" ? 256 : 256;
   const h = performanceLevel === "high" ? 384 : 128;
   box.SetAsBoxXYCenterAngle(
-    w / METER, // 幅
+    w * 2 / METER, // 幅
     h / METER, // 高さ
     new b2Vec2(
       windowW / 2 / METER, // 発生X座標
-      -windowH / 2 / METER
+      -1
     ), // 発生Y座標
     0
   );
@@ -204,15 +283,6 @@ function handleTick() {
     shape.y = yy;
   }
   requestAnimationFrame(handleTick);
-}
-
-/**
- * マウス座標を取得します。
- * @return b2Vec2 マウス座標のベクター情報です。
- */
-function getMouseCoords(point) {
-  const p = new b2Vec2(point.x / METER, point.y / METER);
-  return p;
 }
 
 /**
